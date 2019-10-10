@@ -1,0 +1,197 @@
+---
+title: Flats in Berlin
+author: Corrie
+date: '2019-05-05'
+slug: flats-in-berlin
+categories: []
+tags:
+  - R
+  - Berlin
+  - flats
+comments: yes
+image: images/tea_with_books.jpg
+menu: ''
+share: yes
+---
+
+```{r}
+library(tidyverse)
+library(skimr)    # quick skimming of data frames
+library(scales)
+library(rstanarm)
+```
+
+```{r}
+df <- read_csv("../data/immo_data.csv") 
+
+df <- df %>%
+  # assumption: if baseRent or totalRent missing or 0 (but the other field not), then this is the totalRent 
+  # e.g. an arrangement where electricity/heating etc is included
+  mutate(rent = ifelse(is.na(totalRent) | totalRent == 0, baseRent, totalRent  )) %>%
+  filter(rent > 0 & livingSpace > 0) %>%
+  mutate(logSpace = log(livingSpace),
+         rent_sqm = rent / livingSpace,
+         date = factor(date, levels=c("Sep18", "May19"))) 
+
+
+skim(df)
+```
+
+```{r}
+glimpse(df)
+```
+
+```{r}
+remove_outliers <- function(df, col, iqr_factor=4) {
+  col_data <- df %>% pull( {{col}} )
+  iqr <- IQR(col_data )
+  lower <- quantile(col_data, .25)
+  upper <- quantile(col_data, .75)
+  
+  df %>% 
+    filter({{col}} > lower - iqr_factor*iqr & {{col}} < upper + iqr_factor*iqr)
+}
+# remove some outliers
+
+df <- df %>% 
+  remove_outliers(logSpace) %>%
+  mutate(logRent = log(rent)) %>%
+  remove_outliers(logRent)
+```
+
+```{r}
+df %>%
+  ggplot(aes(x=rent, y=livingSpace, col=typeOfFlat)) +
+  geom_point(size=0.1, alpha=0.5) +
+  #xlim(0, 5e3) +
+  theme_minimal()
+```
+
+```{r}
+df %>%
+  ggplot(aes(x=rent, y=livingSpace, col=geo_bln)) +
+  geom_point(size=0.3, alpha=0.7) +
+  theme_minimal()
+```
+
+
+```{r}
+df %>%
+  group_by(date) %>%
+  summarise(mean_rent=mean(rent), sd=sd(rent), n=n(), se=sd/sqrt(n)) %>%
+  ggplot(aes(x=date, y=mean_rent, group=1, label=round(mean_rent))) +
+  geom_point(col="steelblue") +
+  geom_line(col="steelblue") +
+  geom_linerange(aes(ymin=mean_rent - 2*se,
+                    ymax=mean_rent + 2*se), col="steelblue") +
+   geom_ribbon( aes(ymin=mean_rent - 2*se,
+                    ymax=mean_rent + 2*se), alpha=0.3,
+                fill="steelblue") +
+  geom_text(nudge_y = 10) +
+  scale_y_continuous(limits = c(700, 850), 
+                     labels = scales::dollar_format(prefix="",
+                                            suffix="\u20ac")) +
+  labs(x="Time of Data Scraping",
+       y="Average rent",
+       title="Average Rent") +
+  theme_minimal() 
+```
+
+looks like prices actually went down.
+attention: only two points in time. rents might very likely follow a seasonal pattern (e.g. beginning of semester)
+
+
+```{r}
+df %>%
+  mutate(date = factor(date, levels=c("Sep18", "May19"))) %>%
+  group_by(date) %>%
+  summarise(mean_rent=mean(rent_sqm), sd=sd(rent_sqm), n=n(), se=sd/sqrt(n)) %>%
+  ggplot(aes(x=date, y=mean_rent, group=1, label=round(mean_rent))) +
+  geom_point(col="steelblue") +
+  geom_line(col="steelblue") +
+  geom_linerange(aes(ymin=mean_rent - 2*se,
+                    ymax=mean_rent + 2*se), col="steelblue") +
+   geom_ribbon( aes(ymin=mean_rent - 2*se,
+                    ymax=mean_rent + 2*se), alpha=0.3,
+                fill="steelblue") +
+  #geom_text(nudge_y = 10) +
+  scale_y_continuous(limits = c(9.5, 11.5), 
+                     labels = scales::dollar_format(prefix="",
+                                            suffix="\u20ac")) +
+  labs(x="Time of Data Scraping",
+       y="Average rent per square meter",
+       title="Average Rent per Square Meter") +
+  theme_minimal() 
+```
+
+Interestingly: price per square meter went up. Maybe more smaller flats, that are more expensive per square meter but overall smaller rent.
+
+Also looks like there are more flats on offer now (though might also be some data problem from not so good scraping)
+```{r}
+df %>%
+  mutate(date = factor(date, levels=c("Sep18", "May19"))) %>%
+  group_by(date) %>%
+  summarise(mean_rent=mean(rent), sd=sd(rent), n=n(), se=sd/sqrt(n)) %>%
+  mutate(prev = lag(n), perc = n / prev, 
+         perc_f = ifelse(is.na(perc), "", paste0("+", percent(perc - 1))) ) %>%
+  ggplot(aes(x=date, y=n, group=1, label=perc_f)) +
+  geom_bar(fill="steelblue", stat = "identity") +
+  geom_text(nudge_y = 3000) +
+  labs(x="Time of Data Scraping",
+       y="Number of flats on the plattform",
+       title="Change of Number of flats on plattform") +
+  theme_minimal() 
+```
+
+```{r}
+rent18 <- df$rent[df$date == "Sep18"]
+rent19 <- df$rent[df$date == "May19"]
+t.test(rent18, rent19)
+```
+
+```{r}
+m <- lm( rent ~ date, data=df)
+summary(m)
+```
+
+```{r}
+confint(m)
+```
+
+```{r}
+mb <- stan_glm(rent ~ date, data=df)
+summary(mb)
+```
+
+```{r}
+plot(mb, pars="dateMay19")
+```
+
+
+```{r}
+plot(rent ~ date, data=df, ylim=c(0, 2000))
+```
+
+```{r}
+plot(log(rent) ~ date, data=df)
+```
+
+```{r}
+m2 <- lm(log(rent) ~ date, data=df)
+summary(m2)
+```
+
+```{r}
+exp(confint(m2))
+```
+
+
+```{r}
+m3 <- lm(rent_sqm ~ date, data=df)
+summary(m3)
+```
+
+```{r}
+hist(log(df$rent_sqm))
+```
+

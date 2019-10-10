@@ -1,0 +1,215 @@
+---
+title: Flats in Berlin
+author: Corrie
+date: '2019-05-05'
+slug: flats-in-berlin
+categories: []
+tags:
+  - R
+  - Berlin
+  - flats
+comments: yes
+image: images/tea_with_books.jpg
+menu: ''
+share: yes
+---
+
+
+
+<pre class="r"><code>library(tidyverse)</code></pre>
+<pre><code>## ── Attaching packages ────────────────────────────────────────────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──</code></pre>
+<pre><code>## ✔ ggplot2 3.1.1          ✔ purrr   0.3.2     
+## ✔ tibble  2.1.1          ✔ dplyr   0.8.0.1   
+## ✔ tidyr   0.8.3.9000     ✔ stringr 1.4.0     
+## ✔ readr   1.3.1          ✔ forcats 0.4.0</code></pre>
+<pre><code>## ── Conflicts ───────────────────────────────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+## ✖ dplyr::filter() masks stats::filter()
+## ✖ dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>library(skimr)    # quick skimming of data frames</code></pre>
+<pre><code>## 
+## Attaching package: &#39;skimr&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:stats&#39;:
+## 
+##     filter</code></pre>
+<pre class="r"><code>df &lt;- read_csv(&quot;../../drafts/immo_data.csv&quot;)</code></pre>
+<pre><code>## Parsed with column specification:
+## cols(
+##   .default = col_double(),
+##   regio1 = col_character(),
+##   heatingType = col_character(),
+##   telekomTvOffer = col_character(),
+##   newlyConst = col_logical(),
+##   balcony = col_logical(),
+##   firingTypes = col_character(),
+##   hasKitchen = col_logical(),
+##   geo_bln = col_character(),
+##   cellar = col_logical(),
+##   houseNumber = col_character(),
+##   geo_krs = col_character(),
+##   zipCode = col_character(),
+##   condition = col_character(),
+##   interiorQual = col_character(),
+##   petsAllowed = col_character(),
+##   streetPlain = col_character(),
+##   lift = col_logical(),
+##   typeOfFlat = col_character(),
+##   geo_plz = col_character(),
+##   garden = col_logical()
+##   # ... with 5 more columns
+## )</code></pre>
+<pre><code>## See spec(...) for full column specifications.</code></pre>
+<pre class="r"><code>skim(df)</code></pre>
+<pre><code>## Skim summary statistics
+##  n obs: 50434 
+##  n variables: 48 
+## 
+## ── Variable type:character ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+##               variable missing complete     n min  max empty n_unique
+##              condition   12873    37561 50434   9   34     0        9
+##            description    4094    46340 50434   1 3918     0    41625
+##  energyEfficiencyClass   39339    11095 50434   1   14     0       10
+##             facilities   10246    40188 50434   1 3815     0    37074
+##            firingTypes   10924    39510 50434   3   50     0       70
+##                geo_bln       0    50434 50434   6   22     0       16
+##                geo_krs       0    50434 50434   3   39     0      417
+##                geo_plz       0    50434 50434   4    5     0     5108
+##            heatingType    8311    42123 50434   9   30     0       13
+##            houseNumber   13585    36849 50434   1   34     0     2145
+##           interiorQual   21402    29032 50434   6   13     0        4
+##            petsAllowed   21433    29001 50434   2   10     0        3
+##                 regio1       0    50434 50434   6   22     0       16
+##                 regio2       0    50434 50434   3   39     0      417
+##                 regio3       0    50434 50434   2   49     0     5565
+##            streetPlain   13583    36851 50434   1   52     0    17547
+##         telekomTvOffer    5351    45083 50434   4   13     0        3
+##             typeOfFlat    7933    42501 50434   4   19     0       10
+##                zipCode       0    50434 50434   4    5     0     5108
+## 
+## ── Variable type:logical ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+##    variable missing complete     n  mean                         count
+##     balcony       0    50434 50434 0.6   TRU: 30176, FAL: 20258, NA: 0
+##      cellar       0    50434 50434 0.63  TRU: 31957, FAL: 18477, NA: 0
+##      garden       0    50434 50434 0.2   FAL: 40312, TRU: 10122, NA: 0
+##  hasKitchen       0    50434 50434 0.32  FAL: 34258, TRU: 16176, NA: 0
+##        lift       0    50434 50434 0.23  FAL: 38946, TRU: 11488, NA: 0
+##  newlyConst       0    50434 50434 0.086  FAL: 46118, TRU: 4316, NA: 0
+## 
+## ── Variable type:numeric ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+##                  variable missing complete     n     mean         sd
+##                  baseRent       0    50434 50434   663.42 5521.74   
+##             baseRentRange       0    50434 50434     3.67    2.23   
+##      electricityBasePrice       0    50434 50434    89.1     5.41   
+##       electricityKwhPrice       0    50434 50434     0.2     0.0097 
+##                     floor    9740    40694 50434     2.1     1.7    
+##              heatingCosts   35035    15399 50434    86.24  291.97   
+##             lastRefurbish   35579    14855 50434  2012.85   10.74   
+##               livingSpace       0    50434 50434    74.95   33.02   
+##          livingSpaceRange       0    50434 50434     3.13    1.42   
+##              noParkSpaces   33165    17269 50434     1.45   17.63   
+##                   noRooms       0    50434 50434     2.67    1.21   
+##              noRoomsRange       0    50434 50434     2.61    0.93   
+##            numberOfFloors   18871    31563 50434     3.59    7.07   
+##              picturecount       0    50434 50434     9.51    6.37   
+##                pricetrend     228    50206 50434     3.49    2.22   
+##                   scoutId       0    50434 50434 1e+08       1.2e+07
+##             serviceCharge    1346    49088 50434   152.12  116.23   
+##  telekomHybridUploadSpeed   39632    10802 50434    10       0      
+##        telekomUploadSpeed    5642    44792 50434    24.84   17.32   
+##               thermalChar   19338    31096 50434   115.63   55.5    
+##                 totalRent    7884    42550 50434   844.53 6452.72   
+##           yearConstructed   11343    39091 50434  1965.01   45.37   
+##      yearConstructedRange   11343    39091 50434     3.65    2.72   
+##        p0      p25        p50        p75          p100     hist
+##      0      328.2   470        775.29    1234567       ▇▁▁▁▁▁▁▁
+##      1        2       3          5             9       ▇▂▂▂▂▂▁▁
+##     71.43    90.76   90.76      90.76         90.76    ▁▁▁▁▁▁▁▇
+##      0.17     0.19    0.2        0.21          0.23    ▁▂▆▇▇▁▁▁
+##     -1        1       2          3            83       ▇▁▁▁▁▁▁▁
+##      0       55.2    71         92.92      12613       ▇▁▁▁▁▁▁▁
+##   1893     2011    2016       2018          2917       ▇▁▁▁▁▁▁▁
+##      0       55      68         88           542.53    ▇▇▁▁▁▁▁▁
+##      1        2       3          4             7       ▂▇▇▅▁▂▁▁
+##      0        1       1          1          2241       ▇▁▁▁▁▁▁▁
+##      1        2       3          3           160       ▇▁▁▁▁▁▁▁
+##      1        2       3          3             5       ▂▇▁▇▁▂▁▁
+##      0        2       3          4           730       ▇▁▁▁▁▁▁▁
+##      0        5       9         12           109       ▇▂▁▁▁▁▁▁
+##     -5.17     1.85    3.44       4.76         12.87    ▁▁▃▇▆▁▁▁
+##  3e+07    1e+08       1.1e+08    1.1e+08       1.1e+08 ▁▁▁▁▁▁▁▇
+##      0       95     135.95     190         15750       ▇▁▁▁▁▁▁▁
+##     10       10      10         10            10       ▁▁▁▇▁▁▁▁
+##      1       10      40         40           100       ▆▁▁▇▁▁▁▁
+##      0.1     79.98  108.9      142          1563.2     ▇▁▁▁▁▁▁▁
+##      0      457     625        960       1234567       ▇▁▁▁▁▁▁▁
+##   1000     1936    1972       1996          2019       ▁▁▁▁▁▁▁▇
+##      1        1       3          5             9       ▇▂▂▂▁▁▁▂</code></pre>
+<pre class="r"><code>glimpse(df)</code></pre>
+<pre><code>## Observations: 50,434
+## Variables: 48
+## $ regio1                   &lt;chr&gt; &quot;Hessen&quot;, &quot;Nordrhein_Westfalen&quot;, &quot;Berli…
+## $ serviceCharge            &lt;dbl&gt; 280.00, 80.00, 170.00, 221.00, 182.00, …
+## $ heatingType              &lt;chr&gt; &quot;central_heating&quot;, NA, &quot;central_heating…
+## $ telekomTvOffer           &lt;chr&gt; &quot;ONE_YEAR_FREE&quot;, &quot;ONE_YEAR_FREE&quot;, &quot;ONE_…
+## $ telekomHybridUploadSpeed &lt;dbl&gt; 10, NA, NA, NA, 10, NA, NA, 10, 10, NA,…
+## $ newlyConst               &lt;lgl&gt; FALSE, FALSE, FALSE, FALSE, FALSE, FALS…
+## $ balcony                  &lt;lgl&gt; TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, FA…
+## $ electricityBasePrice     &lt;dbl&gt; 90.76, 90.76, 90.76, 90.76, 90.76, 90.7…
+## $ picturecount             &lt;dbl&gt; 10, 8, 2, 13, 10, 5, 6, 14, 11, 16, 3, …
+## $ pricetrend               &lt;dbl&gt; 5.30, 4.11, 9.20, 4.11, 3.92, 3.92, 3.9…
+## $ telekomUploadSpeed       &lt;dbl&gt; 10.0, 10.0, 40.0, 40.0, 2.4, 2.4, 2.4, …
+## $ totalRent                &lt;dbl&gt; 1730.00, NA, 799.00, 796.00, 481.80, 40…
+## $ yearConstructed          &lt;dbl&gt; 1988, NA, 1996, 1996, 1963, 1963, 1935,…
+## $ electricityKwhPrice      &lt;dbl&gt; 0.1985, 0.1915, 0.1985, 0.1985, 0.1985,…
+## $ scoutId                  &lt;dbl&gt; 107388047, 94294719, 107387750, 1073877…
+## $ noParkSpaces             &lt;dbl&gt; 1, NA, NA, NA, NA, NA, NA, NA, NA, NA, …
+## $ firingTypes              &lt;chr&gt; &quot;gas&quot;, NA, &quot;district_heating&quot;, &quot;distric…
+## $ hasKitchen               &lt;lgl&gt; TRUE, FALSE, TRUE, FALSE, FALSE, FALSE,…
+## $ geo_bln                  &lt;chr&gt; &quot;Hessen&quot;, &quot;Nordrhein_Westfalen&quot;, &quot;Berli…
+## $ cellar                   &lt;lgl&gt; TRUE, FALSE, TRUE, FALSE, TRUE, TRUE, T…
+## $ yearConstructedRange     &lt;dbl&gt; 4, NA, 5, 5, 2, 2, 1, 2, 1, 1, 2, 5, 1,…
+## $ baseRent                 &lt;dbl&gt; 1450.00, 740.00, 629.00, 575.00, 299.80…
+## $ houseNumber              &lt;chr&gt; NA, NA, &quot;20&quot;, &quot;56&quot;, &quot;4&quot;, &quot;2&quot;, &quot;1&quot;, &quot;11&quot;…
+## $ livingSpace              &lt;dbl&gt; 85.00, 60.00, 59.61, 88.40, 66.62, 55.2…
+## $ geo_krs                  &lt;chr&gt; &quot;Frankfurt_am_Main&quot;, &quot;Dortmund&quot;, &quot;Berli…
+## $ zipCode                  &lt;chr&gt; &quot;60487&quot;, &quot;44229&quot;, &quot;13127&quot;, &quot;28876&quot;, &quot;58…
+## $ condition                &lt;chr&gt; &quot;mint_condition&quot;, NA, &quot;well_kept&quot;, &quot;ref…
+## $ interiorQual             &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA,…
+## $ petsAllowed              &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA,…
+## $ streetPlain              &lt;chr&gt; NA, NA, &quot;Rosenthaler_Weg&quot;, &quot;Bergstraße&quot;…
+## $ lift                     &lt;lgl&gt; FALSE, FALSE, FALSE, FALSE, FALSE, FALS…
+## $ baseRentRange            &lt;dbl&gt; 7, 5, 5, 4, 1, 1, 2, 2, 2, 5, 4, 2, 2, …
+## $ typeOfFlat               &lt;chr&gt; &quot;apartment&quot;, NA, &quot;apartment&quot;, &quot;apartmen…
+## $ geo_plz                  &lt;chr&gt; &quot;60487&quot;, &quot;44229&quot;, &quot;13127&quot;, &quot;28876&quot;, &quot;58…
+## $ noRooms                  &lt;dbl&gt; 2.5, 2.0, 2.0, 4.0, 3.0, 2.0, 4.0, 2.0,…
+## $ thermalChar              &lt;dbl&gt; 154.60, NA, 79.00, 134.70, 90.00, 90.00…
+## $ floor                    &lt;dbl&gt; 2, NA, 1, 0, 2, 0, 1, 2, 0, 2, 1, 0, 1,…
+## $ numberOfFloors           &lt;dbl&gt; 3, NA, NA, NA, NA, NA, NA, NA, NA, NA, …
+## $ noRoomsRange             &lt;dbl&gt; 2, 2, 2, 4, 3, 2, 4, 2, 3, 5, 3, 2, 2, …
+## $ garden                   &lt;lgl&gt; FALSE, FALSE, FALSE, FALSE, FALSE, FALS…
+## $ livingSpaceRange         &lt;dbl&gt; 4, 2, 2, 4, 3, 2, 4, 2, 2, 5, 3, 2, 2, …
+## $ regio2                   &lt;chr&gt; &quot;Frankfurt_am_Main&quot;, &quot;Dortmund&quot;, &quot;Berli…
+## $ regio3                   &lt;chr&gt; &quot;Bockenheim&quot;, &quot;Kirchhörde&quot;, &quot;Französisc…
+## $ description              &lt;chr&gt; &quot;Diese helle 2,5-Zimmer-Wohnung bietet …
+## $ facilities               &lt;chr&gt; &quot;\r- Besonderheiten: Kamin&quot;, NA, &quot;- Bal…
+## $ heatingCosts             &lt;dbl&gt; NA, 60.0, 90.0, 111.0, 80.0, 62.0, NA, …
+## $ energyEfficiencyClass    &lt;chr&gt; NA, NA, &quot;C&quot;, NA, NA, NA, NA, &quot;NO_INFORM…
+## $ lastRefurbish            &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA,…</code></pre>
+<pre class="r"><code>df %&gt;%
+  ggplot(aes(x=totalRent, y=livingSpace, col=typeOfFlat)) +
+  geom_point(size=0.1, alpha=0.5) +
+  geom_density_2d() +
+  #stat_density_2d(aes(fill=stat(level)), geom=&quot;polygon&quot;) +
+  xlim(0, 5e3)</code></pre>
+<pre><code>## Warning: Removed 7944 rows containing non-finite values (stat_density2d).</code></pre>
+<pre><code>## Warning: Removed 7944 rows containing missing values (geom_point).</code></pre>
+<p><img src="/post/2019-05-05-flats-in-berlin_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<pre class="r"><code>df %&gt;%
+  ggplot(aes(x=totalRent, y=livingSpace, col=geo_bln)) +
+  geom_point(size=0.3, alpha=0.7)+
+  geom_density_2d() +
+  xlim(0, 10e3)</code></pre>
+<pre><code>## Warning: Removed 7892 rows containing non-finite values (stat_density2d).</code></pre>
+<pre><code>## Warning: Removed 7892 rows containing missing values (geom_point).</code></pre>
+<p><img src="/post/2019-05-05-flats-in-berlin_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<pre class="r"><code>df &lt;- df %&gt;%
+  filter( totalRent &gt; 0 &amp; livingSpace &gt; 0)</code></pre>
