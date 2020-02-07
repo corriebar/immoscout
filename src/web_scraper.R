@@ -7,17 +7,17 @@ library(foreach)       # to run in parallel
 library(doMC)          # backend to run in parallel (only for linux)
 library(here)          # relative paths
  
-url <- "https://www.immobilienscout24.de/Suche/S-2/Wohnung-Miete"
+url <- "https://www.immobilienscout24.de/Suche/de/wohnung-mieten?sorting=2"
 
 first_page <- read_html(url)
 
 last_page_number <- first_page %>%
-    html_nodes("#pageSelection > select > option") %>%
+    html_nodes("#pageSelection div select option") %>%
     html_text %>%
     length 
 
    
-page_url <- "https://www.immobilienscout24.de/Suche/S-2/P-{pages}/Wohnung-Miete"
+page_url <- "https://www.immobilienscout24.de/Suche/de/wohnung-mieten?sorting=2&pagenumber={pages}"
 pages <- 1:last_page_number
 page_list <- glue(page_url)
  
@@ -74,6 +74,7 @@ foreach(i=1:last_page_number) %dopar% {
     
     map(listing_list, get_listing_data) %>%
       bind_rows() %>%
-      write_csv(paste0(here::here("data/rawdata/"),str_pad(i, 4, pad="0"), "_", format(Sys.time(), "%Y-%m-%d-%H%M%S"), ".csv" ) )
+      write_csv(paste0(here::here("data/rawdata/"), 
+                       str_pad(i, 4, pad="0"), "_", format(Sys.time(), "%Y-%m-%d-%H%M%S"), ".csv" ) )
   }
 }
