@@ -2,7 +2,7 @@ library(tidyverse)
 library(naniar)   # for handling NA values
 library(here)
 
-read_all_files <- function(path) {
+read_all_files <- function(path, col_list=col_list) {
     file_list <- list.files(path, full.names = TRUE)
 
 
@@ -19,40 +19,50 @@ read_all_files <- function(path) {
                               `geo_plz` = col_character(),
                               `houseNumber` = col_character(),
                               `energyEfficiencyClass` = col_character(),
-                              `objectnumber` = col_character() ),
+                              `objectnumber` = col_character(),
+                              `scoutId` = col_character()),
+             locale = locale("de", encoding = 'UTF-8'),
              na=c("", "NA", "null")) %>%
-      select(c("regio1", "serviceCharge", "heatingType", "telekomTvOffer",
-                           "telekomHybridUploadSpeed", "newlyConst", "balcony", "electricityBasePrice",
-                           "picturecount", "pricetrend", "telekomUploadSpeed",
-                           "totalRent", "yearConstructed", "electricityKwhPrice",
-                           "scoutId", "noParkSpaces", "firingTypes", "hasKitchen",
-                           "geo_bln", "cellar", "yearConstructedRange", "baseRent", "houseNumber",
-                           "livingSpace", "geo_krs", "zipCode", "condition", "interiorQual",
-                           "petsAllowed", "streetPlain", "lift", "baseRentRange",
-                           "typeOfFlat", "geo_plz", "noRooms", "assistedLiving",
-                           "thermalChar", "geo_land", "floor", "numberOfFloors",
-                           "noRoomsRange", "garden", "livingSpaceRange", "regio2", "regio3",
-                           "description", "facilities", "heatingCosts", "energyEfficiencyClass",
-                           "lastRefurbish")) %>%
+      select(all_of(col_list)) %>%
       distinct(scoutId, .keep_all = TRUE)
     
 }
 
-df18 <- read_all_files(here::here("data/sep_2018"))
+col_list <- c("regio1", "serviceCharge", "heatingType", "telekomTvOffer",
+              "telekomHybridUploadSpeed", "newlyConst", "balcony", 
+              "picturecount", "pricetrend", "telekomUploadSpeed",
+              "totalRent", "yearConstructed", 
+              "scoutId", "noParkSpaces", "firingTypes", "hasKitchen",
+              "geo_bln", "cellar", "yearConstructedRange", "baseRent", "houseNumber",
+              "livingSpace", "geo_krs", "zipCode", "condition", "interiorQual",
+              "petsAllowed", "street", "streetPlain", "lift", "baseRentRange",
+              "typeOfFlat", "geo_plz", "noRooms", "assistedLiving",
+              "thermalChar", "geo_land", "floor", "numberOfFloors",
+              "noRoomsRange", "garden", "livingSpaceRange", "regio2", "regio3",
+              "description", "facilities", "heatingCosts", "energyEfficiencyClass",
+              "lastRefurbish")
+
+col_list_old <- c(col_list, "electricityBasePrice", "electricityKwhPrice", "energyEfficiencyClass")
+
+df18 <- read_all_files(here::here("data/sep_2018"), col_list = col_list_old)
 
 df18$date <- "Sep18"
 
 # actually, there were some new columns added between september and may, but I'll ignore them
-df19 <- read_all_files(here::here("data/may_2019"))
+df19 <- read_all_files(here::here("data/may_2019"),  col_list = col_list_old)
 
 df19$date <- "May19"
 
-df_oct19 <- read_all_files(here::here("data/oct_2019"))
+df_oct19 <- read_all_files(here::here("data/oct_2019"),  col_list = col_list_old)
 
 df_oct19$date <- "Oct19"
 
+df_feb20 <- read_all_files(here::here("data/feb_2020"),  col_list = col_list)
 
-df <- rbind(df18, df19, df_oct19) %>% 
+df_feb20$date <- "Feb20"
+
+
+df <- bind_rows(df18, df19, df_oct19, df_feb20) %>% 
   sample_frac(size=1) %>% 
   distinct(scoutId, .keep_all = TRUE)
 
@@ -105,7 +115,7 @@ df <- df %>%
 
 
 
-write_csv(df, here::here("data/immo_data.csv"))
+write_csv(df, here::here("data/immo_data_feb_2020.csv"))
 
 
 
